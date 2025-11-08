@@ -1,0 +1,48 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: content(~{::body})}">
+<body>
+  <h1 class="h4 mb-3">Dashboard</h1>
+  <div class="row g-3 mb-3">
+    <div class="col-md-3" th:each="kpi : ${kpis}">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small" th:text="${kpi.label}">Open</div>
+          <div class="display-6 fw-bold" th:text="${kpi.value}">0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row g-3">
+    <div class="col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-header fw-semibold">By Status</div>
+        <div class="card-body"><canvas id="statusChart"></canvas></div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-header fw-semibold">By Category</div>
+        <div class="card-body"><canvas id="categoryChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script th:inline="javascript">
+    const statusData = [[${statusCounts}]];      // e.g. {"OPEN":3,"IN_PROGRESS":2,"RESOLVED":5,"REJECTED":1}
+    const catData    = [[${categoryCounts}]];    // e.g. {"Hostel":4,"IT":3,"Transport":2}
+
+    new Chart(document.getElementById('statusChart'), {
+      type: 'doughnut',
+      data: { labels: Object.keys(statusData), datasets:[{ data:Object.values(statusData) }] },
+      options: { plugins:{ legend:{ position:'bottom' } } }
+    });
+
+    new Chart(document.getElementById('categoryChart'), {
+      type: 'bar',
+      data: { labels: Object.keys(catData), datasets:[{ data:Object.values(catData) }] },
+      options: { scales:{ y:{ beginAtZero:true } } }
+    });
+  </script>
+</body>
+</html>
