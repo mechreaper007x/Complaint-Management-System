@@ -1,0 +1,76 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<body>
+<div layout:fragment="content">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">Freights</h1>
+    <a class="btn btn-primary" th:href="@{/freights/new}">
+      <i class="bi bi-plus-lg me-1"></i> New Freight
+    </a>
+  </div>
+
+  <form class="row g-2 align-items-end mb-3" method="get" th:action="@{/freights}">
+    <div class="col-md-3">
+      <label class="form-label">Status</label>
+      <select class="form-select" name="status">
+        <option th:selected="${param.status == null}" value="">All</option>
+        <option th:selected="${param.status == 'IN_TRANSIT'}">IN_TRANSIT</option>
+        <option th:selected="${param.status == 'DELIVERED'}">DELIVERED</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Search Customer</label>
+      <input class="form-control" name="q" placeholder="e.g. ABC Corp" th:value="${param.q}">
+    </div>
+    <div class="col-md-3">
+      <button class="btn btn-outline-secondary w-100" type="submit">
+        <i class="bi bi-funnel me-1"></i> Filter
+      </button>
+    </div>
+  </form>
+
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th><th>Origin</th><th>Destination</th><th>Customer</th><th>Status</th><th>Departure Date</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr th:each="f : ${freights}">
+            <td th:text="${f.id}">1</td>
+            <td>
+              <a th:href="@{/freights/{id}(id=${f.id})}" class="link-body-emphasis fw-semibold"
+                 th:text="${f.origin}">Origin</a>
+              <div class="text-muted small" th:text="${#strings.abbreviate(f.destination, 80)}"></div>
+            </td>
+            <td th:text="${f.destination}">Destination</td>
+            <td th:text="${f.customer}">Customer</td>
+            <td>
+              <span th:classappend="${f.status=='IN_TRANSIT'?'bg-primary':(f.status=='DELIVERED'?'bg-success':'bg-dark')}"
+                    th:text="${f.status}">IN_TRANSIT</span>
+            </td>
+            <td th:text="${#temporals.format(f.departureDate, 'dd MMM yyyy')}">08 Nov 2025</td>
+            <td class="text-end">
+              <a th:href="@{/freights/{id}(id=${f.id})}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-eye"></i>
+              </a>              <button class="btn btn-sm btn-outline-danger"
+                      data-bs-toggle="modal"
+                      data-bs-target="#confirmDelete"
+                      th:attr="data-action=@{/freights/{id}/delete(id=${f.id})}">
+                <i class="bi bi-trash"></i>
+              </button>
+
+            </td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(freights)}">
+            <td colspan="7" class="text-center py-5 text-muted">No freights found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</body>
+</html>

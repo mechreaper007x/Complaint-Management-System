@@ -13,39 +13,40 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.cms.model.Complaint;
-import com.cms.service.ComplaintService;
-
-import lombok.RequiredArgsConstructor;
+import com.cms.model.FreightDTO;
+import com.cms.service.FreightService;
 
 @RestController
-@RequestMapping("/api/complaints")
-@RequiredArgsConstructor
-public class ComplaintRestController {
-  private final ComplaintService service = null;
+@RequestMapping("/api/freights")
+public class FreightRestController {
+  private final FreightService service;
+
+  public FreightRestController(FreightService service) {
+    this.service = service;
+  }
 
   @GetMapping
-  public List<Complaint> list() {
+  public List<FreightDTO> list() {
     return service.listAll();
   }
 
   @GetMapping("/{id}")
-  public Complaint get(@PathVariable Long id) {
+  public FreightDTO get(@PathVariable Long id) {
     return service.get(id);
   }
 
   @PostMapping
-  public Complaint create(@RequestBody Complaint c) {
+  public FreightDTO create(@RequestBody FreightDTO c) {
     return service.create(c);
   }
 
   @PutMapping("/{id}")
-  public Complaint update(@PathVariable Long id, @RequestBody Complaint c) {
+  public FreightDTO update(@PathVariable Long id, @RequestBody FreightDTO c) {
     return service.update(id, c);
   }
 
   @PatchMapping("/{id}/status")
-  public Complaint updateStatus(@PathVariable Long id,
+  public FreightDTO updateStatus(@PathVariable Long id,
                                 @RequestParam String status,
                                 @RequestParam(required = false) String notes) {
     return service.transition(id, status, notes);
@@ -56,3 +57,4 @@ public class ComplaintRestController {
     service.delete(id);
   }
 }
+

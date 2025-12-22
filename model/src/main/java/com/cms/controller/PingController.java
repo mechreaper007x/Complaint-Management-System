@@ -11,6 +11,4 @@ public class PingController {
         return "pong";
     }
 }
- {
-    
-}
+

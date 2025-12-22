@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title th:text="${pageTitle} ?: 'Complaint Management'">Complaint Management</title>
+  <title th:text="${pageTitle} ?: 'Freight Management'">Freight Management</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,16 +16,16 @@
 <body class="bg-light">
 <nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top">
   <div class="container">
-    <a class="navbar-brand fw-bold" th:href="@{/complaints}">
-      <i class="bi bi-life-preserver me-2"></i>CMS
+    <a class="navbar-brand fw-bold" th:href="@{/freights}">
+      <i class="bi bi-truck me-2"></i>FMS
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div id="nav" class="collapse navbar-collapse">
       <ul class="navbar-nav me-auto">
-        <li class="nav-item"><a class="nav-link" th:href="@{/complaints}">Complaints</a></li>
-        <li class="nav-item"><a class="nav-link" th:href="@{/complaints/new}">New</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/freights}">Freights</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/freights/new}">New</a></li>
       </ul>
       <span class="navbar-text text-muted small">v1.0</span>
     </div>
@@ -36,12 +36,12 @@
   <div th:if="${flash}" class="alert alert-success d-flex align-items-center" role="alert">
     <i class="bi bi-check2-circle me-2"></i><span th:text="${flash}">Saved</span>
   </div>
-  <div th:replace="${content}">Content</div>
+  <div layout:fragment="content"></div>
 </main>
 
 <footer class="border-top bg-white py-3">
   <div class="container small text-muted d-flex justify-content-between">
-    <span>Complaint Management System</span>
+    <span>Freight Management System</span>
     <span>&copy; <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2025</span></span>
   </div>
 </footer>
@@ -53,7 +53,7 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content rounded-4">
       <div class="modal-header">
-        <h1 class="modal-title fs-5">Delete complaint?</h1>
+        <h1 class="modal-title fs-5">Delete freight?</h1>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">

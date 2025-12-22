@@ -8,13 +8,13 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
-import com.cms.model.Complaint;
-import com.cms.repository.ComplaintRepository;
+import com.cms.model.Freight;
+import com.cms.repository.FreightRepository;
 
 @Controller
 public class DashboardController {
-  private final ComplaintRepository repo;
-  public DashboardController(ComplaintRepository repo){ this.repo = repo; }
+  private final FreightRepository repo;
+  public DashboardController(FreightRepository repo){ this.repo = repo; }
 
   @GetMapping("/")
   public String home(){ return "redirect:/dashboard"; }
@@ -22,19 +22,17 @@ public class DashboardController {
   @GetMapping("/dashboard")
   public String dashboard(Model m){
     var all = repo.findAll();
-    var statusCounts = all.stream().collect(Collectors.groupingBy(Complaint::getStatus, Collectors.counting()));
-    var categoryCounts = all.stream().collect(Collectors.groupingBy(Complaint::getCategory, Collectors.counting()));
+    var statusCounts = all.stream().collect(Collectors.groupingBy(Freight::getStatus, Collectors.counting()));
+    var customerCounts = all.stream().collect(Collectors.groupingBy(Freight::getCustomer, Collectors.counting()));
     List<Map<String,Object>> kpis = List.of(
-      Map.of("label","Open", "value", statusCounts.getOrDefault("OPEN",0L)),
-      Map.of("label","In Progress", "value", statusCounts.getOrDefault("IN_PROGRESS",0L)),
-      Map.of("label","Resolved", "value", statusCounts.getOrDefault("RESOLVED",0L)),
-      Map.of("label","Rejected", "value", statusCounts.getOrDefault("REJECTED",0L))
+      Map.of("label","In Transit", "value", statusCounts.getOrDefault("IN_TRANSIT",0L)),
+      Map.of("label","Delivered", "value", statusCounts.getOrDefault("DELIVERED",0L))
     );
     m.addAttribute("kpis", kpis);
     m.addAttribute("statusCounts", statusCounts);
-    m.addAttribute("categoryCounts", categoryCounts);
+    m.addAttribute("customerCounts", customerCounts);
     m.addAttribute("pageTitle", "Dashboard");
-    m.addAttribute("content", "dashboard :: body");
     return "dashboard";
   }
 }
+

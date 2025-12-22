@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Freight Management — Neon Squad</title>
+<link rel="icon" href="data:,">
+<style>
+  /* Gen Z neon + glass minimal UI */
+  :root{
+    --bg:#0b0f14;
+    --card: rgba(255,255,255,0.04);
+    --glass: rgba(255,255,255,0.04);
+    --accent:#8B5CF6; /* violet */
+    --accent2:#06B6D4; /* cyan */
+    --muted: #9aa4b2;
+    --glass-border: rgba(255,255,255,0.06);
+    --radius:14px;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  html,body{height:100%;background:linear-gradient(180deg,#071021 0%, #06121b 40%, #02030a 100%);color:#e6eef8;margin:0;}
+  .app{max-width:1100px;margin:28px auto;padding:20px;}
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:800;color:#06121b;box-shadow:0 6px 20px rgba(0,0,0,0.6);font-size:18px}
+  h1{font-size:22px;margin:0}
+  .nav{display:flex;gap:10px}
+  .nav a{color:var(--muted);text-decoration:none;padding:8px 12px;border-radius:10px;font-weight:600}
+  .nav a.active{background:linear-gradient(90deg, rgba(139,92,246,0.14), rgba(6,182,212,0.08));color:#fff;box-shadow:0 6px 18px rgba(8,12,24,0.6)}
+  .mock-badge{font-size:12px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);color:var(--muted)}
+  .grid{display:grid;gap:16px}
+  .row-4{grid-template-columns:repeat(4,1fr)}
+  .card{background:var(--glass);border-radius:var(--radius);padding:18px;border:1px solid var(--glass-border);backdrop-filter: blur(6px);box-shadow:0 8px 30px rgba(2,6,23,0.6)}
+  .center{text-align:center}
+  .big-num{font-size:28px;font-weight:800;color:var(--accent)}
+  .muted{color:var(--muted);font-size:13px}
+  /* table */
+  .table-wrap{overflow:auto}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{padding:12px 8px;border-bottom:1px dashed rgba(255,255,255,0.03);text-align:left}
+  th{color:var(--muted);font-weight:700}
+  tr:hover td{background:linear-gradient(90deg, rgba(139,92,246,0.03), transparent)}
+  a.link{color:var(--accent);text-decoration:none;font-weight:700}
+  /* form */
+  label{display:block;margin-bottom:6px;color:var(--muted);font-size:13px}
+  input,select,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid var(--glass-border);background:transparent;color:#e7f0ff;outline:none}
+  button{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#06121b;border:none;padding:10px 14px;border-radius:10px;font-weight:800;cursor:pointer}
+  .btn-ghost{background:transparent;border:1px solid var(--glass-border);color:var(--muted)}
+  .flex{display:flex;gap:10px;align-items:center}
+  .space-between{display:flex;justify-content:space-between;align-items:center}
+  .small{font-size:13px;color:var(--muted)}
+  .tag{padding:6px 10px;border-radius:999px;font-weight:700;font-size:12px}
+  .tag.in_transit{background:rgba(6,182,212,0.12);color:var(--accent2)}
+  .tag.delivered{background:rgba(34,197,94,0.08);color:#86efac}
+  /* mobile */
+  @media (max-width:800px){
+    .row-4{grid-template-columns:repeat(2,1fr)}
+    header{flex-direction:column;align-items:start;gap:12px}
+  }
+  footer{margin-top:28px;color:var(--muted);font-size:13px;text-align:center}
+  /* playful microcopy */
+  .micro{font-style:italic;color:#bcd7ff}
+  .selftests li{margin-bottom:6px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo">FM</div>
+      <div>
+        <h1>Freight Management</h1>
+        <div class="small micro">fast. bright. low-drag.</div>
+      </div>
+    </div>
+
+    <div class="flex">
+      <nav class="nav" id="topnav">
+        <a href="#/" data-route="/" class="nav-link">Dashboard</a>
+        <a href="#/freights" data-route="/freights" class="nav-link">Freights</a>
+        <a href="#/new" data-route="/new" class="nav-link">New</a>
+      </nav>
+      <div class="mock-badge" id="mockBadge">...</div>
+    </div>
+  </header>
+
+  <main id="appRoot"></main>
+
+  <footer>Made with neon vibes — open source energy. <span class="small">API base: <span id="baseUrl"></span></span></footer>
+</div>
+
+<script>
+/* ====== CONFIG ====== */
+const BASE = (typeof VITE_API_BASE !== 'undefined' && VITE_API_BASE) || 'http://localhost:8044/api';
+document.getElementById('baseUrl').textContent = BASE;
+
+/* timeout helper */
+function timeout(ms) { return new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms)); }
+
+/* safeFetch tries the backend quickly and lets callers fallback if it fails */
+async function safeFetch(path, opts = {}, ms = 1200) {
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), ms);
+  try {
+    const res = await fetch(BASE + path, { ...opts, signal: controller.signal });
+    clearTimeout(t);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (err) {
+    clearTimeout(t);
+    throw err;
+  }
+}
+
+/* ===== MOCK STORE (same seed) ===== */
+const seed = [
+  { id:1, origin:"New York", destination:"Los Angeles", customer:"ABC Corp", status:"IN_TRANSIT", departureDate:new Date().toISOString(), arrivalDate:new Date(new Date().setDate(new Date().getDate() + 5)).toISOString(), carrier:"FedEx", trackingNumber:"TRK12345" },
+  { id:2, origin:"Chicago", destination:"Houston", customer:"XYZ Inc", status:"DELIVERED", departureDate:new Date(new Date().setDate(new Date().getDate() - 10)).toISOString(), arrivalDate:new Date(new Date().setDate(new Date().getDate() - 5)).toISOString(), carrier:"UPS", trackingNumber:"TRK67890" },
+];
+
+function createClient() {
+  let mock = false;
+  let store = [...seed];
+  let maxId = store.reduce((m,c)=>Math.max(m,c.id),0);
+
+  const net = {
+    list: ()=> safeFetch('/freights'),
+    get: (id)=> safeFetch(`/freights/${id}`),
+    create: (data)=> fetch(BASE + '/freights',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }),
+    update: (id,data)=> fetch(BASE + `/freights/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }),
+    patchStatus: (id,status,notes)=> {
+      const url = new URL(BASE + `/freights/${id}/status`);
+      if(status) url.searchParams.set('status',status);
+      if(notes) url.searchParams.set('notes',notes);
+      return fetch(url,{method:'PATCH'}).then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); });
+    },
+    remove: (id)=> fetch(BASE + `/freights/${id}`,{method:'DELETE'}).then(r=> { if(!r.ok && r.status!==204) throw new Error('HTTP '+r.status); return {ok:true}; }),
+  };
+
+  const mockApi = {
+    list: async ()=> [...store].sort((a,b)=>(b.departureDate||'').localeCompare(a.departureDate||'')),
+    get: async (id)=> { const c = store.find(x=>x.id===Number(id)); if(!c) throw new Error('Not Found'); return c; },
+    create: async (data)=> { const now=new Date().toISOString(); const c={ id:++maxId, status:'IN_TRANSIT', departureDate:now, arrivalDate:now, ...data }; store.push(c); return c; },
+    update: async (id,data)=> { const i=store.findIndex(x=>x.id===Number(id)); if(i<0) throw new Error('Not Found'); store[i]={...store[i],...data,arrivalDate:new Date().toISOString()}; return store[i]; },
+    patchStatus: async (id,status,notes)=> { const i=store.findIndex(x=>x.id===Number(id)); if(i<0) throw new Error('Not Found'); store[i]={...store[i], status: status||store[i].status, arrivalDate:new Date().toISOString()}; return store[i]; },
+    remove: async (id)=> { const i = store.findIndex(x=>x.id===Number(id)); if(i>=0) store.splice(i,1); return {ok:true}; }
+  };
+
+  // Probe backend once
+  const ready = (async ()=>{
+    try {
+      await safeFetch('/freights',{},900);
+      mock = false;
+    } catch(e) {
+      mock = true;
+    }
+    return true;
+  })();
+
+  const api = new Proxy({}, {
+    get(_, prop){
+      return async (...args)=>{
+        await ready;
+        return (mock?mockApi:net)[prop](...args);
+      };
+    }
+  });
+
+  return { api, isMock: ()=> ready.then(()=>mock) };
+}
+
+/* Create client */
+const clientRef = createClient();
+clientRef.isMock().then(m=> document.getElementById('mockBadge').textContent = m ? 'MOCK' : 'LIVE');
+
+/* ===== ROUTER + RENDERING ===== */
+const root = document.getElementById('appRoot');
+const navLinks = document.querySelectorAll('.nav-link');
+function setActive(route){
+  navLinks.forEach(a=>a.classList.toggle('active', a.dataset.route === route));
+}
+
+/* Helpers */
+function el(html){ const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstChild; }
+function formatDate(s){ if(!s) return ''; return s.replace('T',' ').slice(0,10); } // Only date for freight
+function statusTag(s){
+  if(!s) return '';
+  const cls = s==='IN_TRANSIT'?'in_transit': s==='DELIVERED'?'delivered':'';
+  return `<span class="tag ${cls}">${s.replace('_',' ')}</span>`;
+}
+
+/* VIEWS */
+
+async function DashboardView(){
+  setActive('/');
+  root.innerHTML = `<div class="grid row-4" id="dashGrid"></div><div style="height:12px"></div><div class="card"><h3 class="small">Self Tests</h3><ul class="selftests" id="selftests"></ul></div>`;
+  const grid = document.getElementById('dashGrid');
+  grid.innerHTML = '';
+  try {
+    const list = await clientRef.api.list();
+    const count = s => list.filter(c=> (c.status||'IN_TRANSIT').toUpperCase()===s).length;
+    ['IN_TRANSIT','DELIVERED'].forEach(s=>{
+      const html = `<div class="card center"><div class="small">${s.replace('_',' ')}</div><div class="big-num">${count(s)}</div></div>`;
+      grid.insertAdjacentHTML('beforeend', html);
+    });
+    renderSelfTests();
+  } catch(e){
+    root.innerHTML = `<div class="card"><strong>Error loading dashboard:</strong> ${e.message}</div>`;
+  }
+}
+
+async function FreightsListView(){
+  setActive('/freights');
+  root.innerHTML = `<div class="card"><div class="space-between"><h2 style="margin:0">All Freights</h2><div class="small"> <input id="q" placeholder="Search customer..." style="padding:8px;border-radius:8px;background:transparent;border:1px solid var(--glass-border);color:#eaf6ff"/></div></div>
+    <div style="height:12px"></div>
+    <div class="table-wrap"><table id="freightTable"><thead><tr><th>ID</th><th>Origin</th><th>Destination</th><th>Customer</th><th>Status</th><th>Departure Date</th><th>Action</th></tr></thead><tbody></tbody></table></div></div>
+    <div style="height:12px"></div><div class="card"><h3 class="small">Self Tests</h3><ul class="selftests" id="selftests"></ul></div>`;
+
+  const tbody = root.querySelector('tbody');
+  const qInput = document.getElementById('q');
+  async function render(){
+    try {
+      const all = await clientRef.api.list();
+      const q = (qInput.value||'').toLowerCase();
+      const view = all.filter(f => !q || (f.customer||'').toLowerCase().includes(q));
+      tbody.innerHTML = view.map(f=>`<tr>
+        <td>${f.id}</td>
+        <td style="font-weight:700">${f.origin}</td>
+        <td>${f.destination||''}</td>
+        <td>${f.customer||''}</td>
+        <td class="small">${statusTag(f.status)}</td>
+        <td class="small">${formatDate(f.departureDate)}</td>
+        <td><a class="link" href="#/freights/${f.id}">View</a></td>
+      </tr>`).join('');
+      renderSelfTests();
+    } catch(e){
+      tbody.innerHTML = `<tr><td colspan="7">Error: ${e.message}</td></tr>`;
+    }
+  }
+  qInput.addEventListener('input', ()=> render());
+  await render();
+}
+
+async function FreightDetailView(id){
+  setActive('');
+  root.innerHTML = `<div class="card" id="detailCard"><div>Loading...</div></div>`;
+  try {
+    const f = await clientRef.api.get(id);
+    const card = document.getElementById('detailCard');
+    card.innerHTML = `
+      <div class="space-between"><div><h2 style="margin:0">${f.origin} to ${f.destination}</h2><div class="small">#${f.id} • ${f.customer || 'anon'}</div></div>
+      <div><button class="btn-ghost" id="backBtn">&larr; Back</button> <button id="delBtn" class="btn-ghost">Delete</button></div></div>
+      <div style="height:12px"></div>
+      <div class="card"><div class="flex" style="justify-content:space-between;align-items:center;margin-bottom:10px"><div>${statusTag(f.status)}</div><div class="small">Departure ${formatDate(f.departureDate)}</div></div>
+        <p class="small" style="white-space:pre-line">Customer: ${f.customer||''}<br>Carrier: ${f.carrier||''}<br>Tracking Number: ${f.trackingNumber||''}</p>
+        <div style="height:10px"></div>
+        <div class="small">Arrival: ${formatDate(f.arrivalDate)}</div>
+      </div>
+      <div style="height:12px"></div>
+      <div class="card">
+        <div class="small" style="font-weight:700">Admin Actions</div>
+        <div style="height:8px"></div>
+        <select id="statusSel"><option>IN_TRANSIT</option><option>DELIVERED</option></select>
+        <div style="height:8px"></div>
+        <div class="flex"><button id="updateBtn">Update Status</button><button id="editBtn" class="btn-ghost">Edit (Full)</button></div>
+      </div>
+    `;
+    document.getElementById('backBtn').addEventListener('click', ()=> location.hash = '#/freights');
+    document.getElementById('delBtn').addEventListener('click', async ()=>{
+      if(!confirm('Delete freight?')) return;
+      await clientRef.api.remove(id);
+      alert('deleted');
+      location.hash = '#/freights';
+    });
+    document.getElementById('statusSel').value = (f.status||'IN_TRANSIT').toUpperCase();
+    document.getElementById('updateBtn').addEventListener('click', async ()=>{
+      const s = document.getElementById('statusSel').value;
+      try {
+        const res = await clientRef.api.patchStatus(id, s);
+        alert('status updated to ' + res.status);
+        location.hash = `#/freights/${id}`;
+        // refresh
+        FreightDetailView(id);
+      } catch(e){ alert('Error: '+e.message) }
+    });
+    document.getElementById('editBtn').addEventListener('click', ()=> {
+      // simple prompt-based edit (minimal)
+      const origin = prompt('Origin', f.origin) || f.origin;
+      const destination = prompt('Destination', f.destination) || f.destination;
+      const customer = prompt('Customer', f.customer) || f.customer;
+      clientRef.api.update(id,{ origin: origin, destination: destination, customer: customer }).then(()=> { alert('saved'); FreightDetailView(id); }).catch(e=>alert('err:'+e.message));
+    });
+  } catch(e){
+    root.innerHTML = `<div class="card">Error loading freight: ${e.message} — <a href="#/freights">Back</a></div>`;
+  }
+}
+
+async function NewFreightView(){
+  setActive('/new');
+  root.innerHTML = `<div class="card"><h2 style="margin:0">New Freight</h2><div style="height:12px"></div>
+    <form id="newForm" class="grid" style="grid-template-columns:1fr;gap:12px">
+      <div><label>Origin</label><input id="f_origin" required /></div>
+      <div><label>Destination</label><input id="f_destination" required /></div>
+      <div><label>Customer</label><input id="f_customer" required /></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label>Status</label><select id="f_status"><option>IN_TRANSIT</option><option>DELIVERED</option></select></div>
+        <div><label>Carrier</label><input id="f_carrier" /></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label>Departure Date</label><input id="f_departureDate" type="date" /></div>
+        <div><label>Arrival Date</label><input id="f_arrivalDate" type="date" /></div>
+      </div>
+      <div><label>Tracking Number</label><input id="f_trackingNumber" /></div>
+      <div style="display:flex;gap:10px"><button type="submit">Save</button><button type="button" class="btn-ghost" id="cancelBtn">Cancel</button></div>
+    </form></div>
+    <div style="height:12px"></div><div class="card"><h3 class="small">Self Tests</h3><ul class="selftests" id="selftests"></ul></div>`;
+
+  document.getElementById('cancelBtn').addEventListener('click', ()=> location.hash = '#/freights');
+
+  document.getElementById('newForm').addEventListener('submit', async (ev)=>{
+    ev.preventDefault();
+    const payload = {
+      origin: document.getElementById('f_origin').value,
+      destination: document.getElementById('f_destination').value,
+      customer: document.getElementById('f_customer').value,
+      status: document.getElementById('f_status').value,
+      departureDate: document.getElementById('f_departureDate').value,
+      arrivalDate: document.getElementById('f_arrivalDate').value,
+      carrier: document.getElementById('f_carrier').value,
+      trackingNumber: document.getElementById('f_trackingNumber').value,
+    };
+    try {
+      const saved = await clientRef.api.create(payload);
+      location.hash = '#/freights/' + saved.id;
+    } catch(e){ alert('Error: '+e.message) }
+  });
+  renderSelfTests();
+}
+
+/* Self-tests (same checks as React) */
+async function renderSelfTests(){
+  const ul = document.getElementById('selftests');
+  if(!ul) return;
+  ul.innerHTML = '...running tests';
+  const r = [];
+  const push = (name,pass,info='') => r.push({name,pass,info});
+  try {
+    const list = await clientRef.api.list();
+    push('TC01 list -> array', Array.isArray(list), `len=${list.length}`);
+  } catch(e){ push('TC01 list -> array', false, e.message); }
+  try {
+    const created = await clientRef.api.create({ origin:"TC Origin", destination:"TC Destination", customer:"TC Customer", status:"IN_TRANSIT" });
+    const got = await clientRef.api.get(created.id);
+    push('TC02 create+get', !!got && got.id === created.id, `id=${created.id}`);
+  } catch(e){ push('TC02 create+get', false, e.message); }
+  try {
+    const all = await clientRef.api.list();
+    const target = all[0];
+    const updated = await clientRef.api.patchStatus(target.id, 'DELIVERED');
+    push('TC03 patchStatus', updated.status === 'DELIVERED', `id=${target.id}`);
+  } catch(e){ push('TC03 patchStatus', false, e.message); }
+  try {
+    const all = await clientRef.api.list();
+    const target = all[all.length-1];
+    await clientRef.api.remove(target.id);
+    let exists = true;
+    try { await clientRef.api.get(target.id); } catch { exists = false; }
+    push('TC04 delete', exists === false, `deletedId=${target.id}`);
+  } catch(e){ push('TC04 delete', false, e.message); }
+
+  ul.innerHTML = r.map(t=>`<li style="color:${t.pass?'#86efac':'#fda4af'}">${t.pass?'✔':'✖'} ${t.name} ${t.info?'<span class="small" style="color:var(--muted)">— '+t.info+'</span>':''}</li>`).join('');
+}
+
+/* ROUTING */
+function parseHash(){
+  const h = location.hash.replace(/^#/,'') || '/';
+  const parts = h.split('/').filter(Boolean);
+  if(h === '/' || h === '') return { view: 'dashboard' };
+  if(h === '/freights') return { view: 'list' };
+  if(h === '/new') return { view: 'new' };
+  if(parts[0] === 'freights' && parts[1]) return { view: 'detail', id: parts[1] };
+  return { view: 'dashboard' };
+}
+
+async function router(){
+  const route = parseHash();
+  if(route.view === 'dashboard') await DashboardView();
+  else if(route.view === 'list') await FreightsListView();
+  else if(route.view === 'detail') await FreightDetailView(route.id);
+  else if(route.view === 'new') await NewFreightView();
+  else await DashboardView();
+  // update nav active link
+  setActive(location.hash.replace(/^#/,'') || '/');
+}
+
+/* initialize */
+window.addEventListener('hashchange', router);
+window.addEventListener('load', router);
+</script>
+</body>
+</html>

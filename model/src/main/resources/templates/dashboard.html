@@ -1,12 +1,13 @@
 <!doctype html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: content(~{::body})}">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
 <body>
+<div layout:fragment="content">
   <h1 class="h4 mb-3">Dashboard</h1>
   <div class="row g-3 mb-3">
     <div class="col-md-3" th:each="kpi : ${kpis}">
       <div class="card shadow-sm h-100">
         <div class="card-body">
-          <div class="text-muted small" th:text="${kpi.label}">Open</div>
+          <div class="text-muted small" th:text="${kpi.label}">In Transit</div>
           <div class="display-6 fw-bold" th:text="${kpi.value}">0</div>
         </div>
       </div>
@@ -21,16 +22,16 @@
     </div>
     <div class="col-lg-6">
       <div class="card shadow-sm">
-        <div class="card-header fw-semibold">By Category</div>
-        <div class="card-body"><canvas id="categoryChart"></canvas></div>
+        <div class="card-header fw-semibold">By Customer</div>
+        <div class="card-body"><canvas id="customerChart"></canvas></div>
       </div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script th:inline="javascript">
-    const statusData = [[${statusCounts}]];      // e.g. {"OPEN":3,"IN_PROGRESS":2,"RESOLVED":5,"REJECTED":1}
-    const catData    = [[${categoryCounts}]];    // e.g. {"Hostel":4,"IT":3,"Transport":2}
+    const statusData = [[${statusCounts}]];      // e.g. {"IN_TRANSIT":3,"DELIVERED":2}
+    const customerData    = [[${customerCounts}]];    // e.g. {"Customer A":4,"Customer B":3}
 
     new Chart(document.getElementById('statusChart'), {
       type: 'doughnut',
@@ -38,11 +39,12 @@
       options: { plugins:{ legend:{ position:'bottom' } } }
     });
 
-    new Chart(document.getElementById('categoryChart'), {
+    new Chart(document.getElementById('customerChart'), {
       type: 'bar',
-      data: { labels: Object.keys(catData), datasets:[{ data:Object.values(catData) }] },
+      data: { labels: Object.keys(customerData), datasets:[{ data:Object.values(customerData) }] },
       options: { scales:{ y:{ beginAtZero:true } } }
     });
   </script>
+</div>
 </body>
 </html>

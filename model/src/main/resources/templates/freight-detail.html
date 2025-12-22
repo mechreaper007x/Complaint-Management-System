@@ -1,0 +1,59 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<body>
+<div layout:fragment="content">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0" th:text="${freight.origin} + ' to ' + ${freight.destination}">Freight</h1>
+    <div>
+      <a class="btn btn-outline-secondary me-2" th:href="@{/freights}">
+        <i class="bi bi-arrow-left"></i> Back
+      </a>
+      <form th:action="@{/freights/{id}/delete(id=${freight.id})}" method="post" class="d-inline">
+        <button class="btn btn-outline-danger"><i class="bi bi-trash"></i></button>
+      </form>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="mb-2">
+            <span th:classappend="${freight.status=='IN_TRANSIT'?'bg-primary':(freight.status=='DELIVERED'?'bg-success':'bg-dark')}"
+                  th:text="${freight.status}">IN_TRANSIT</span>
+          </div>
+          <p class="mb-0">
+            <strong>Origin:</strong> <span th:text="${freight.origin}"></span><br>
+            <strong>Destination:</strong> <span th:text="${freight.destination}"></span><br>
+            <strong>Customer:</strong> <span th:text="${freight.customer}"></span><br>
+            <strong>Carrier:</strong> <span th:text="${freight.carrier}"></span><br>
+            <strong>Tracking Number:</strong> <span th:text="${freight.trackingNumber}"></span>
+          </p>
+        </div>
+        <div class="card-footer small text-muted">
+          Departure Date:
+          <span th:text="${#temporals.format(freight.departureDate, 'dd MMM yyyy')}"></span> • Arrival Date:
+          <span th:text="${#temporals.format(freight.arrivalDate, 'dd MMM yyyy')}"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card shadow-sm">
+        <div class="card-header fw-semibold"><i class="bi bi-wrench-adjustable-circle me-1"></i>Admin Actions</div>
+        <div class="card-body">
+          <form th:action="@{/freights/{id}/status(id=${freight.id})}" method="post" class="vstack gap-2">
+            <select class="form-select" name="status">
+              <option>IN_TRANSIT</option><option>DELIVERED</option>
+            </select>
+            <button class="btn btn-primary w-100">
+              <i class="bi bi-arrow-repeat me-1"></i> Update Status
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,13 +1,18 @@
-package com.cms.model;
+package com.cms;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class ModelApplicationTests {
+class CmsApplicationTests {
 
 	@Test
 	void contextLoads() {
 	}
+
+    @Test
+    void applicationContextMain() {
+        CmsApplication.main(new String[]{});
+    }
 
 }
