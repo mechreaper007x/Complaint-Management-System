@@ -1,6 +1,7 @@
 services:
   - type: web
     name: complaint-management-system
+    plan: free
     runtime: docker
     dockerfilePath: Dockerfile
     dockerContext: .
